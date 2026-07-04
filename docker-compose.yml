@@ -1,0 +1,8 @@
+services:
+  telegram-radarr-bot:
+    build: .
+    image: telegram-servarr-bot
+    container_name: telegram-radarr-bot
+    restart: unless-stopped
+    volumes:
+      - ./config:/app/config

@@ -1,0 +1,20 @@
+{
+    "telegram": {
+        "botToken": "123456789:REEMPLAZA_CON_TU_TOKEN_DE_BOTFATHER"
+    },
+    "bot": {
+        "password": "elige-una-contraseña-para-/auth",
+        "owner": 0,
+        "maxResults": 10
+    },
+    "radarr": {
+        "hostname": "192.168.1.10",
+        "apiKey": "REEMPLAZA_CON_LA_API_KEY_DE_RADARR",
+        "port": 7878
+    },
+    "sonarr": {
+        "hostname": "192.168.1.10",
+        "apiKey": "REEMPLAZA_CON_LA_API_KEY_DE_SONARR",
+        "port": 8989
+    }
+}

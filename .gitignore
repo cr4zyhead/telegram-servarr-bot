@@ -1,0 +1,8 @@
+config/config.json
+config/acl.json
+node_modules/
+src-old/
+.DS_Store
+.superpowers/
+docs/superpowers/
+radarr.log
