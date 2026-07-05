@@ -74,7 +74,7 @@ The bot then listens on that port (already exposed in `docker-compose.yml`). In 
 - URL: `http://<bot-host>:8787/webhook?token=<your token>`
 - Method: POST, trigger **On Import Complete / On Download**
 
-Notifications go to `bot.owner`, or to a group if you add `"notifyId": <group chat id>` under `bot` (get the id with `/cid` in the group). Keep the port LAN-only (firewall it) — the endpoint is plain HTTP.
+Notifications go to `bot.owner`, or to a group if you add `"notifyId": <group chat id>` under `bot` (get the id with `/cid` in the group). Episodes of the same series are batched: when a whole season comes in, you get **one** message listing all episodes (e.g. `Friends — 10 new episode(s): 2x01–2x10`) after a ~2-minute quiet window, instead of one alert per episode. Keep the port LAN-only (firewall it) — the endpoint is plain HTTP.
 
 Also create `config/acl.json` with an empty user list:
 

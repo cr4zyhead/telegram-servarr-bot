@@ -10,6 +10,7 @@ export const es = {
   authUsage: "Uso: /auth <contraseña>",
   authUserGranted: (name) => `El usuario ${name} ahora tiene acceso al bot.`,
   notifAvailable: (icon, title) => `${icon} ✅ ${title} ya está disponible`,
+  notifEpisodes: (title, n, list) => `📺 ✅ ${title} — ${n} episodio(s) nuevos: ${list}`,
   help: [
     "🎬 /movie <nombre> — buscar y agregar una película",
     "📺 /serie <nombre> — buscar y agregar una serie",
@@ -91,6 +92,7 @@ export const en = {
   authUsage: "Usage: /auth <password>",
   authUserGranted: (name) => `User ${name} now has access to the bot.`,
   notifAvailable: (icon, title) => `${icon} ✅ ${title} is now available`,
+  notifEpisodes: (title, n, list) => `📺 ✅ ${title} — ${n} new episode(s): ${list}`,
   help: [
     "🎬 /movie <name> — search and add a movie",
     "📺 /serie <name> — search and add a series",
