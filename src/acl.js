@@ -35,5 +35,12 @@ export class Acl {
     this.#save();
   }
 
+  setLang(id, lang) {
+    const user = this.allowedUsers.find((u) => u.id === id);
+    if (!user) return;
+    user.lang = lang;
+    this.#save();
+  }
+
   name(u) { return u.username || [u.first_name, u.last_name].filter(Boolean).join(" "); }
 }

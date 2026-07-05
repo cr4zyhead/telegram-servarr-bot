@@ -1,47 +1,45 @@
-import { t } from "./strings.js";
-import { pick, yesNo } from "./wizard.js";
+import { resolveLang } from "./lang.js";
+import { pick, yesNo, carousel } from "./wizard.js";
 import { seriesAddPayload } from "./payloads.js";
 
-const MONITOR_OPTIONS = [
-  { label: "Todas las temporadas", value: "all" },
-  { label: "Solo temporadas futuras", value: "future" },
-  { label: "Primera temporada", value: "firstSeason" },
-  { label: "Última temporada", value: "lastSeason" },
-];
-
-export function serieConversation(sonarr, maxResults) {
+export function serieConversation(sonarr, maxResults, acl) {
   return async function serie(conversation, ctx) {
+    const t = resolveLang(acl, ctx.from);
+    const MONITOR_OPTIONS = [
+      { label: t.monitorAll, value: "all" },
+      { label: t.monitorFuture, value: "future" },
+      { label: t.monitorFirst, value: "firstSeason" },
+      { label: t.monitorLast, value: "lastSeason" },
+    ];
+
     const term = (ctx.message?.text ?? "").replace(/^\/\S+\s*/, "").trim();
     if (!term) return void (await ctx.reply(t.serieUsage));
 
     const found = await conversation.external(() => sonarr.get("series/lookup", { term }));
     if (!found.length) return void (await ctx.reply(t.noResults(term)));
 
-    const serie = await pick(conversation, ctx, found.slice(0, maxResults),
-      (s) => `${s.title} (${s.year || "s/f"})`, t.foundN(found.length, "📺"));
+    const serie = await carousel(conversation, ctx, t, found.slice(0, maxResults));
     if (!serie) return;
 
     const library = await conversation.external(() => sonarr.get("series"));
     if (library.some((s) => s.tvdbId === serie.tvdbId))
       return void (await ctx.reply(t.alreadyAdded(serie.title)));
 
-    if (serie.overview)
-      await ctx.reply(`${serie.title} (${serie.year})\n\n${serie.overview}`.slice(0, 4000));
-
     const profiles = await conversation.external(() => sonarr.get("qualityprofile"));
-    const profile = await pick(conversation, ctx, profiles, (p) => p.name, t.pickProfile);
+    const profile = await pick(conversation, ctx, t, profiles, (p) => p.name, t.pickProfile);
     if (!profile) return;
 
     const folders = await conversation.external(() => sonarr.get("rootfolder"));
     const folder = folders.length === 1
       ? folders[0]
-      : await pick(conversation, ctx, folders, (f) => f.path, t.pickFolder);
+      : await pick(conversation, ctx, t, folders, (f) => f.path, t.pickFolder);
     if (!folder) return;
 
-    const monitor = await pick(conversation, ctx, MONITOR_OPTIONS, (o) => o.label, t.pickMonitor);
+    const monitor = await pick(conversation, ctx, t, MONITOR_OPTIONS,
+      (o) => o.label, t.pickMonitor);
     if (!monitor) return;
 
-    const search = await yesNo(conversation, ctx, t.searchNow);
+    const search = await yesNo(conversation, ctx, t, t.searchNow);
     if (search === null) return;
 
     await conversation.external(() =>

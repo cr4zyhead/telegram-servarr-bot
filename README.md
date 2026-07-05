@@ -1,33 +1,34 @@
 # telegram-servarr-bot
 
-Bot de Telegram para manejar **Radarr** (películas) y **Sonarr** (series) desde el chat: busca, agrega con perfil de calidad y carpeta, revisa la biblioteca y el calendario de estrenos. Interfaz en español con botones inline.
+A Telegram bot to manage **Radarr** (movies) and **Sonarr** (series) from chat: search with a **poster carousel**, add with quality profile and folder, browse your library and the upcoming calendar. Inline-button UI, **bilingual (English/Spanish)** — it auto-detects each user's Telegram language and can be overridden per user with `/language`.
 
-Reescritura moderna (Node 22+, ESM, [grammY](https://grammy.dev)) inspirada en [itsmegb/telegram-radarr-bot](https://github.com/itsmegb/telegram-radarr-bot) (MIT), que usaba APIs ya retiradas. Este bot usa la API `/api/v3`, la vigente en ambas apps (ojo: el número de la API no coincide con el de la app) — compatible con Radarr v3 en adelante (probado con v6.x) y Sonarr v3/v4 (probado con v4.x).
+Modern rewrite (Node 22+, ESM, [grammY](https://grammy.dev)) inspired by [itsmegb/telegram-radarr-bot](https://github.com/itsmegb/telegram-radarr-bot) (MIT), which relied on long-retired APIs. This bot speaks `/api/v3`, the current API on both apps (note the API number doesn't match the app version) — compatible with Radarr v3 and later (tested on v6.x) and Sonarr v3/v4 (tested on v4.x).
 
-## Comandos
+## Commands
 
-| Comando | Descripción |
+| Command | Description |
 |---|---|
-| `/movie <nombre>` (alias `/q`, `/query`) | Buscar y agregar una película a Radarr: elegir resultado → perfil de calidad → carpeta (se salta si hay una sola) → ¿descargar ya? |
-| `/serie <nombre>` | Igual para Sonarr, con paso extra: qué temporadas monitorear (todas / futuras / primera / última) |
-| `/library [filtro]` | Biblioteca combinada 🎬 + 📺, con filtro opcional (texto o regex) |
-| `/upcoming [días]` | Calendario combinado de estrenos y episodios (default 30 días) |
-| `/clear` | Cancelar el wizard en curso |
-| `/auth <contraseña>` | Pedir acceso al bot |
-| `/help`, `/start` | Ayuda |
+| `/movie <name>` (aliases `/q`, `/query`) | Search and add a movie to Radarr: browse results in a poster carousel (◀️ ✅ ▶️, with synopsis) → quality profile → folder (skipped if there's only one) → download now? |
+| `/serie <name>` | Same for Sonarr, with an extra step: which seasons to monitor (all / future / first / last) |
+| `/library [filter]` | Combined 🎬 + 📺 library, with optional filter (text or regex) |
+| `/upcoming [days]` | Combined calendar of releases and episodes (default 30 days) |
+| `/language es\|en` | Set your language. Without it, the bot follows your Telegram client's language (English/Spanish, Spanish as fallback); the choice is saved per user |
+| `/clear` | Cancel the wizard in progress |
+| `/auth <password>` | Request access to the bot |
+| `/help`, `/start` | Help |
 
-**Solo admin** (el `owner` de la config): `/rss` (RSS sync en ambos), `/wanted` (buscar faltantes), `/refresh` (refrescar bibliotecas), `/users`, `/revoke`, `/unrevoke` (gestión de usuarios con botones), `/cid` (ID del chat).
+**Admin only** (the `owner` from the config): `/rss` (RSS sync on both services), `/wanted` (search missing items), `/refresh` (refresh libraries), `/users`, `/revoke`, `/unrevoke` (user management with buttons), `/cid` (chat ID).
 
-## Requisitos
+## Requirements
 
-- Un bot de Telegram: créalo con [@BotFather](https://t.me/BotFather) y guarda el token.
-- Radarr (v3 o superior, incluida v6) y/o Sonarr (v3/v4) accesibles por red, con sus API keys (Settings → General → Security → API Key). Sonarr es opcional: sin él, el bot funciona solo con películas.
-- Tu ID numérico de Telegram para ser admin (pídeselo a [@userinfobot](https://t.me/userinfobot)).
-- Docker (recomendado) o Node.js 22+.
+- A Telegram bot: create it with [@BotFather](https://t.me/BotFather) and keep the token.
+- Radarr (v3 or later, including v6) and/or Sonarr (v3/v4) reachable over the network, with their API keys (Settings → General → Security → API Key). Sonarr is optional: without it, the bot works movies-only.
+- Your numeric Telegram ID to be the admin (ask [@userinfobot](https://t.me/userinfobot)).
+- Docker (recommended) or Node.js 22+.
 
-## Configuración
+## Configuration
 
-Crea `config/config.json` a partir del ejemplo:
+Create `config/config.json` from the example:
 
 ```bash
 cp config/config.example.json config/config.json
@@ -35,77 +36,78 @@ cp config/config.example.json config/config.json
 
 ```jsonc
 {
-    "telegram": { "botToken": "123456:ABC..." },   // token de BotFather
+    "telegram": { "botToken": "123456:ABC..." },   // BotFather token
     "bot": {
-        "password": "elige-una-contraseña",        // la que se usa con /auth
-        "owner": 123456789,                        // tu ID numérico (admin)
-        "maxResults": 10                           // resultados máx. por búsqueda
+        "password": "pick-a-password",             // used with /auth
+        "owner": 123456789,                        // your numeric ID (admin)
+        "maxResults": 10                           // max search results shown
     },
     "radarr": {
         "hostname": "192.168.1.10",
-        "apiKey": "API_KEY_DE_RADARR",
+        "apiKey": "RADARR_API_KEY",
         "port": 7878
     },
-    "sonarr": {                                    // opcional: bórralo si no usas Sonarr
+    "sonarr": {                                    // optional: remove if you don't use Sonarr
         "hostname": "192.168.1.10",
-        "apiKey": "API_KEY_DE_SONARR",
+        "apiKey": "SONARR_API_KEY",
         "port": 8989
     }
 }
 ```
 
-Campos opcionales por servicio: `ssl` (bool) y `urlBase` (p. ej. `"/radarr"` si está detrás de un proxy con subruta).
+Optional per-service fields: `ssl` (bool) and `urlBase` (e.g. `"/radarr"` behind a subpath reverse proxy).
 
-Crea también `config/acl.json` con la lista de usuarios vacía:
+Also create `config/acl.json` with an empty user list:
 
 ```bash
 echo '{"allowedUsers":[],"revokedUsers":[]}' > config/acl.json
 ```
 
-`config/config.json` y `config/acl.json` están en `.gitignore`: tus tokens nunca se versionan.
+`config/config.json` and `config/acl.json` are gitignored: your tokens are never committed.
 
-## Ejecutar
+## Run
 
-**Con Docker (recomendado):**
+**With Docker (recommended):**
 
 ```bash
 docker compose up -d --build
-docker logs -f telegram-radarr-bot   # debe decir: Bot iniciando… sonarr: true|false
+docker logs -f telegram-radarr-bot   # should print: Bot iniciando… sonarr: true|false
 ```
 
-**Sin Docker:**
+**Without Docker:**
 
 ```bash
 npm install
 npm start
 ```
 
-## Primer uso
+## First use
 
-1. Escríbele al bot en Telegram: `/auth <la contraseña de config.json>`.
-2. El primer usuario autorizado queda en `config/acl.json`; el `owner` ve además los comandos admin en `/help`.
-3. Prueba `/movie dune` y sigue los botones.
+1. Message the bot on Telegram: `/auth <the password from config.json>`.
+2. The first authorized user lands in `config/acl.json`; the `owner` also sees admin commands in `/help`.
+3. Try `/movie dune` and follow the buttons. If your Telegram is in English you'll get English replies automatically; `/language es|en` overrides it.
 
-## Desarrollo
+## Development
 
 ```bash
-npm test        # node:test, sin frameworks
+npm test        # node:test, no frameworks
 ```
 
-| Archivo | Responsabilidad |
+| File | Responsibility |
 |---|---|
-| `src/bot.js` | Entrada: auth/ACL, registro de comandos y conversaciones |
-| `src/api.js` | Cliente REST mínimo para Radarr/Sonarr (`fetch` → `/api/v3`) |
-| `src/movie.js` / `src/serie.js` | Wizards de agregado (conversaciones grammY) |
-| `src/wizard.js` | Helpers de selección con inline keyboards (`pick`, `yesNo`) |
-| `src/library.js` | Biblioteca, calendario y comandos combinados (funciones puras) |
-| `src/payloads.js` | Payloads de alta para Radarr/Sonarr v3 |
-| `src/admin.js` | Gestión de usuarios (revocar/restaurar) |
-| `src/acl.js` | Persistencia de la lista de acceso (`config/acl.json`) |
-| `src/config.js` / `src/strings.js` | Carga de config y todos los textos (es) |
+| `src/bot.js` | Entry point: auth/ACL, language middleware, command and conversation registration |
+| `src/api.js` | Minimal REST client for Radarr/Sonarr (`fetch` → `/api/v3`) |
+| `src/movie.js` / `src/serie.js` | Add wizards (grammY conversations) |
+| `src/wizard.js` | Inline-keyboard selection helpers (`pick`, `yesNo`) |
+| `src/library.js` | Library, calendar and combined commands (pure functions) |
+| `src/payloads.js` | Radarr/Sonarr v3 add payloads |
+| `src/admin.js` | User management (revoke/restore) |
+| `src/acl.js` | Access-list persistence (`config/acl.json`), including per-user language |
+| `src/lang.js` / `src/strings.js` | Language resolution and all texts (es/en) |
+| `src/config.js` | Config loading |
 
-Dependencias: solo `grammy` y `@grammyjs/conversations`.
+Dependencies: just `grammy` and `@grammyjs/conversations`. Adding a third language = one more dictionary in `strings.js` plus its code in `/language`'s validation.
 
-## Licencia
+## License
 
 MIT
