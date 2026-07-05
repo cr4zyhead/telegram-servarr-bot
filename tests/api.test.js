@@ -44,3 +44,21 @@ test("DELETE con query y body vacío → null", async () => {
   assert.equal(opts.method, "DELETE");
   assert.equal(url.toString(), "http://h:1/api/v3/movie/5?deleteFiles=true");
 });
+
+test("PUT manda JSON", async () => {
+  const f = mock.fn(async () => new Response("{}", { status: 202 }));
+  global.fetch = f;
+  const api = new Servarr({ hostname: "h", port: 1, apiKey: "K" });
+  await api.put("series/6", { id: 6 });
+  const [, opts] = f.mock.calls[0].arguments;
+  assert.equal(opts.method, "PUT");
+  assert.equal(opts.body, '{"id":6}');
+});
+
+test("urlBase sin slash inicial se normaliza", async () => {
+  const f = mock.fn(async () => new Response("[]", { status: 200 }));
+  global.fetch = f;
+  const api = new Servarr({ hostname: "h", port: 1, apiKey: "K", urlBase: "radarr" });
+  await api.get("movie");
+  assert.equal(f.mock.calls[0].arguments[0].toString(), "http://h:1/radarr/api/v3/movie");
+});

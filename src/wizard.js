@@ -6,12 +6,16 @@ export async function pick(conversation, ctx, t, items, labelFn, title) {
   const kb = new InlineKeyboard();
   items.forEach((it, i) => kb.text(labelFn(it), `pick:${i}`).row());
   kb.text(t.cancel, "pick:cancel");
-  await ctx.reply(title, { reply_markup: kb });
+  const menu = await ctx.reply(title, { reply_markup: kb });
   let res;
   for (;;) {
     res = await conversation.waitForCallbackQuery(/^pick:(\d+|cancel)$/, { next: true });
     if (res.from.id !== ctx.from.id) {
       await res.answerCallbackQuery({ text: t.notYourMenu });
+      continue;
+    }
+    if (res.callbackQuery.message?.message_id !== menu.message_id) {
+      await res.answerCallbackQuery();
       continue;
     }
     break;
@@ -65,6 +69,10 @@ export async function carousel(conversation, ctx, t, items) {
       await res.answerCallbackQuery({ text: t.notYourMenu });
       continue;
     }
+    if (res.callbackQuery.message?.message_id !== msg?.message_id) {
+      await res.answerCallbackQuery();
+      continue;
+    }
     await res.answerCallbackQuery();
     const action = res.callbackQuery.data.slice(4);
     if (action === "cancel") {
@@ -81,12 +89,16 @@ export async function yesNo(conversation, ctx, t, title) {
   const kb = new InlineKeyboard()
     .text(t.yes, "yn:yes").text(t.no, "yn:no").row()
     .text(t.cancel, "yn:cancel");
-  await ctx.reply(title, { reply_markup: kb });
+  const menu = await ctx.reply(title, { reply_markup: kb });
   let res;
   for (;;) {
     res = await conversation.waitForCallbackQuery(/^yn:(yes|no|cancel)$/, { next: true });
     if (res.from.id !== ctx.from.id) {
       await res.answerCallbackQuery({ text: t.notYourMenu });
+      continue;
+    }
+    if (res.callbackQuery.message?.message_id !== menu.message_id) {
+      await res.answerCallbackQuery();
       continue;
     }
     break;

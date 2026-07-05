@@ -29,6 +29,7 @@ export function startWebhookServer(config, bot, getT) {
       return res.writeHead(405).end();
     }
     let body = "";
+    req.setEncoding("utf8");
     req.on("data", (c) => { body += c; });
     req.on("end", async () => {
       res.writeHead(200).end("ok");

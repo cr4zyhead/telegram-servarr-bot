@@ -1,5 +1,6 @@
 export class Servarr {
   constructor({ hostname, port, apiKey, ssl = false, urlBase = "" }) {
+    if (urlBase && !urlBase.startsWith("/")) urlBase = "/" + urlBase;
     this.base = `${ssl ? "https" : "http"}://${hostname}:${port}${urlBase}/api/v3/`;
     this.apiKey = apiKey;
   }
@@ -26,5 +27,6 @@ export class Servarr {
 
   get(path, query) { return this.#req("GET", path, { query }); }
   post(path, body) { return this.#req("POST", path, { body }); }
+  put(path, body) { return this.#req("PUT", path, { body }); }
   del(path, query) { return this.#req("DELETE", path, { query }); }
 }

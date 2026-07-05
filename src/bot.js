@@ -44,7 +44,8 @@ export function createBot(config, acl, radarr, sonarr) {
     if (password !== config.bot.password) return ctx.reply(ctx.t.authBadPassword);
     acl.allow(ctx.from);
     if (config.bot.owner && config.bot.owner !== ctx.from.id)
-      await ctx.api.sendMessage(config.bot.owner, ctx.t.authUserGranted(acl.name(ctx.from)))
+      await ctx.api.sendMessage(config.bot.owner,
+        resolveLang(acl, { id: config.bot.owner }).authUserGranted(acl.name(ctx.from)))
         .catch(() => {});
     return ctx.reply(ctx.t.authGranted);
   });
@@ -68,10 +69,19 @@ export function createBot(config, acl, radarr, sonarr) {
     return ctx.reply((arg === "en" ? en : es).langSet);
   });
 
-  bot.command(["movie", "query", "q"], (ctx) => ctx.conversation.enter("movie"));
-  bot.command("serie", (ctx) =>
-    sonarr ? ctx.conversation.enter("serie") : ctx.reply(ctx.t.sonarrMissing));
-  bot.command("remove", (ctx) => ctx.conversation.enter("remove"));
+  bot.command(["movie", "query", "q"], async (ctx) => {
+    await ctx.conversation.exitAll();
+    await ctx.conversation.enter("movie");
+  });
+  bot.command("serie", async (ctx) => {
+    if (!sonarr) return ctx.reply(ctx.t.sonarrMissing);
+    await ctx.conversation.exitAll();
+    await ctx.conversation.enter("serie");
+  });
+  bot.command("remove", async (ctx) => {
+    await ctx.conversation.exitAll();
+    await ctx.conversation.enter("remove");
+  });
 
   bot.command("library", async (ctx) => {
     const lines = await libraryLines(radarr, sonarr, (ctx.match ?? "").trim() || null);

@@ -9,7 +9,7 @@ Modern rewrite (Node 22+, ESM, [grammY](https://grammy.dev)) inspired by [itsmeg
 | Command | Description |
 |---|---|
 | `/movie <name>` (aliases `/q`, `/query`) | Search and add a movie to Radarr: browse results in a poster carousel (◀️ ✅ ▶️, with synopsis) → quality profile → folder (skipped if there's only one) → download now? |
-| `/serie <name>` | Same for Sonarr, with an extra step: which seasons to monitor (all / future / first / last) |
+| `/serie <name>` | Same for Sonarr, with an extra step: which seasons to monitor (all / future / first / last). If the series is already in the library, it shows its seasons (with download %) so you can monitor and search another one |
 | `/library [filter]` | Combined 🎬 + 📺 library, with optional filter (text or regex) |
 | `/upcoming [days]` | Combined calendar of releases and episodes (default 30 days) |
 | `/queue` | Current downloads across both services, with progress % |

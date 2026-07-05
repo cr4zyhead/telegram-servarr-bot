@@ -32,3 +32,8 @@ test("setLang persiste", () => {
   new Acl(file).setLang(7, "en");
   assert.equal(new Acl(file).allowedUsers[0].lang, "en");
 });
+
+test("resolveLang usa language_code guardado en acl para from sintético", () => {
+  const acl = new Acl(tmpAcl({ allowedUsers: [{ id: 5, language_code: "en" }], revokedUsers: [] }));
+  assert.equal(resolveLang(acl, { id: 5 }), en);
+});
