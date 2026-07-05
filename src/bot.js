@@ -6,9 +6,10 @@ import { Acl } from "./acl.js";
 import { Servarr } from "./api.js";
 import { es, en } from "./strings.js";
 import { resolveLang } from "./lang.js";
-import { libraryLines, upcomingLines, chunk, runOnBoth } from "./library.js";
+import { libraryLines, upcomingLines, chunk, runOnBoth, queueLines } from "./library.js";
 import { movieConversation } from "./movie.js";
 import { serieConversation } from "./serie.js";
+import { removeConversation } from "./remove.js";
 import { registerAdmin } from "./admin.js";
 
 export function createBot(config, acl, radarr, sonarr) {
@@ -33,6 +34,7 @@ export function createBot(config, acl, radarr, sonarr) {
   if (sonarr)
     bot.use(createConversation(
       serieConversation(sonarr, config.bot.maxResults, acl), "serie"));
+  bot.use(createConversation(removeConversation(radarr, sonarr, acl, config.bot.owner), "remove"));
 
   bot.command("auth", async (ctx) => {
     const password = (ctx.match ?? "").trim();
@@ -59,7 +61,7 @@ export function createBot(config, acl, radarr, sonarr) {
   bot.command("language", (ctx) => {
     const arg = (ctx.match ?? "").trim().toLowerCase();
     if (arg !== "es" && arg !== "en") {
-      const current = ctx.t === es ? "español" : "English";
+      const current = ctx.t.locale === "es" ? "español" : "English";
       return ctx.reply(ctx.t.langUsage(current));
     }
     acl.setLang(ctx.from.id, arg);
@@ -69,6 +71,7 @@ export function createBot(config, acl, radarr, sonarr) {
   bot.command(["movie", "query", "q"], (ctx) => ctx.conversation.enter("movie"));
   bot.command("serie", (ctx) =>
     sonarr ? ctx.conversation.enter("serie") : ctx.reply(ctx.t.sonarrMissing));
+  bot.command("remove", (ctx) => ctx.conversation.enter("remove"));
 
   bot.command("library", async (ctx) => {
     const lines = await libraryLines(radarr, sonarr, (ctx.match ?? "").trim() || null);
@@ -76,9 +79,15 @@ export function createBot(config, acl, radarr, sonarr) {
     for (const block of chunk(lines)) await ctx.reply(block.join("\n"));
   });
 
+  bot.command("queue", async (ctx) => {
+    const lines = await queueLines(radarr, sonarr);
+    if (!lines.length) return ctx.reply(ctx.t.queueEmpty);
+    for (const block of chunk(lines)) await ctx.reply(block.join("\n"));
+  });
+
   bot.command("upcoming", async (ctx) => {
     const days = Number((ctx.match ?? "").trim()) || 30;
-    const lines = await upcomingLines(radarr, sonarr, days);
+    const lines = await upcomingLines(radarr, sonarr, days, ctx.t.locale);
     if (!lines.length) return ctx.reply(ctx.t.calendarEmpty);
     for (const block of chunk(lines)) await ctx.reply(block.join("\n"));
   });
@@ -94,6 +103,8 @@ export function createBot(config, acl, radarr, sonarr) {
   adminCmd("refresh", "RefreshMovie", "RefreshSeries");
 
   registerAdmin(bot, acl, isAdmin);
+
+  bot.on("callback_query", (ctx) => ctx.answerCallbackQuery().catch(() => {}));
 
   bot.catch((err) => {
     console.error("bot error:", err.error ?? err);
@@ -112,6 +123,11 @@ if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).
   const radarr = new Servarr(config.radarr);
   const sonarr = config.sonarr ? new Servarr(config.sonarr) : null;
   const bot = createBot(config, acl, radarr, sonarr);
+  if (config.webhook) {
+    const { startWebhookServer } = await import("./notify.js");
+    startWebhookServer(config, bot, () => resolveLang(acl, { id: config.bot.owner }));
+    console.log("Webhook escuchando en puerto", config.webhook.port);
+  }
   console.log("Bot iniciando… sonarr:", Boolean(sonarr));
   bot.start();
 }

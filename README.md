@@ -12,12 +12,13 @@ Modern rewrite (Node 22+, ESM, [grammY](https://grammy.dev)) inspired by [itsmeg
 | `/serie <name>` | Same for Sonarr, with an extra step: which seasons to monitor (all / future / first / last) |
 | `/library [filter]` | Combined 🎬 + 📺 library, with optional filter (text or regex) |
 | `/upcoming [days]` | Combined calendar of releases and episodes (default 30 days) |
+| `/queue` | Current downloads across both services, with progress % |
 | `/language es\|en` | Set your language. Without it, the bot follows your Telegram client's language (English/Spanish, Spanish as fallback); the choice is saved per user |
 | `/clear` | Cancel the wizard in progress |
 | `/auth <password>` | Request access to the bot |
 | `/help`, `/start` | Help |
 
-**Admin only** (the `owner` from the config): `/rss` (RSS sync on both services), `/wanted` (search missing items), `/refresh` (refresh libraries), `/users`, `/revoke`, `/unrevoke` (user management with buttons), `/cid` (chat ID).
+**Admin only** (the `owner` from the config): `/remove <name>` (delete a movie/series from the library, with confirmation and optional file deletion), `/rss` (RSS sync on both services), `/wanted` (search missing items), `/refresh` (refresh libraries), `/users`, `/revoke`, `/unrevoke` (user management with buttons), `/cid` (chat ID).
 
 ## Requirements
 
@@ -56,6 +57,24 @@ cp config/config.example.json config/config.json
 ```
 
 Optional per-service fields: `ssl` (bool) and `urlBase` (e.g. `"/radarr"` behind a subpath reverse proxy).
+
+### Download notifications (optional)
+
+Add a `webhook` section to `config.json` to get a Telegram message when a download finishes importing:
+
+```jsonc
+"webhook": {
+    "token": "any-long-random-string",   // e.g. openssl rand -hex 16
+    "port": 8787                          // optional, default 8787
+}
+```
+
+The bot then listens on that port (already exposed in `docker-compose.yml`). In **Radarr and Sonarr → Settings → Connect → + → Webhook**, set:
+
+- URL: `http://<bot-host>:8787/webhook?token=<your token>`
+- Method: POST, trigger **On Import Complete / On Download**
+
+Notifications go to `bot.owner`, or to a group if you add `"notifyId": <group chat id>` under `bot` (get the id with `/cid` in the group). Keep the port LAN-only (firewall it) — the endpoint is plain HTTP.
 
 Also create `config/acl.json` with an empty user list:
 
@@ -102,6 +121,8 @@ npm test        # node:test, no frameworks
 | `src/library.js` | Library, calendar and combined commands (pure functions) |
 | `src/payloads.js` | Radarr/Sonarr v3 add payloads |
 | `src/admin.js` | User management (revoke/restore) |
+| `src/remove.js` | Remove wizard (admin) |
+| `src/notify.js` | Webhook server for download notifications (`node:http`) |
 | `src/acl.js` | Access-list persistence (`config/acl.json`), including per-user language |
 | `src/lang.js` / `src/strings.js` | Language resolution and all texts (es/en) |
 | `src/config.js` | Config loading |

@@ -19,9 +19,12 @@ export class Servarr {
       const text = await res.text().catch(() => "");
       throw new Error(`${method} ${path} → HTTP ${res.status} ${text}`.slice(0, 300));
     }
-    return res.json();
+    if (res.status === 204) return null;
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
   }
 
   get(path, query) { return this.#req("GET", path, { query }); }
   post(path, body) { return this.#req("POST", path, { body }); }
+  del(path, query) { return this.#req("DELETE", path, { query }); }
 }

@@ -16,5 +16,9 @@
         "hostname": "192.168.1.10",
         "apiKey": "REEMPLAZA_CON_LA_API_KEY_DE_SONARR",
         "port": 8989
+    },
+    "webhook": {
+        "token": "REEMPLAZA_CON_UN_TOKEN_ALEATORIO_LARGO",
+        "port": 8787
     }
 }

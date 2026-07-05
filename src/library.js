@@ -1,5 +1,5 @@
-const fmtDate = (d) =>
-  new Date(d).toLocaleDateString("es", { day: "2-digit", month: "short" });
+const fmtDate = (d, locale) =>
+  new Date(d).toLocaleDateString(locale, { day: "2-digit", month: "short" });
 
 export async function libraryLines(radarr, sonarr, filter) {
   const [movies, series] = await Promise.all([
@@ -23,7 +23,7 @@ export async function libraryLines(radarr, sonarr, filter) {
     .sort((a, b) => a.slice(2).localeCompare(b.slice(2), "es"));
 }
 
-export async function upcomingLines(radarr, sonarr, days) {
+export async function upcomingLines(radarr, sonarr, days, locale = "es") {
   const start = new Date().toISOString();
   const end = new Date(Date.now() + days * 86400e3).toISOString();
   const [movies, episodes] = await Promise.all([
@@ -42,7 +42,7 @@ export async function upcomingLines(radarr, sonarr, days) {
   ]
     .filter((e) => e.date)
     .sort((a, b) => new Date(a.date) - new Date(b.date));
-  return events.map((e) => `${fmtDate(e.date)} — ${e.label}`);
+  return events.map((e) => `${fmtDate(e.date, locale)} — ${e.label}`);
 }
 
 export function chunk(lines, size = 50) {
@@ -64,4 +64,19 @@ export async function runOnBoth(radarr, sonarr, radarrCmd, sonarrCmd) {
   await run("🎬", radarr, radarrCmd);
   if (sonarr) await run("📺", sonarr, sonarrCmd);
   return out;
+}
+
+export async function queueLines(radarr, sonarr) {
+  const [rq, sq] = await Promise.all([
+    radarr.get("queue", { pageSize: "50", includeMovie: "true" }),
+    sonarr ? sonarr.get("queue", { pageSize: "50", includeSeries: "true", includeEpisode: "true" }) : { records: [] },
+  ]);
+  const pct = (r) => (r.size ? Math.round(((r.size - r.sizeleft) / r.size) * 100) : 0);
+  const line = (icon, name, r) =>
+    `${icon} ${name} — ${pct(r)}%${r.timeleft ? ` (${r.timeleft})` : ""} · ${r.status}`;
+  return [
+    ...(rq.records ?? []).map((r) => line("🎬", r.movie?.title ?? r.title ?? "?", r)),
+    ...(sq.records ?? []).map((r) => line("📺",
+      `${r.series?.title ?? "?"}${r.episode ? ` ${r.episode.seasonNumber}x${String(r.episode.episodeNumber).padStart(2, "0")}` : ""}`, r)),
+  ];
 }

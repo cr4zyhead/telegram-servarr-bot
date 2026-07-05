@@ -6,3 +6,5 @@ services:
     restart: unless-stopped
     volumes:
       - ./config:/app/config
+    ports:
+      - "8787:8787"

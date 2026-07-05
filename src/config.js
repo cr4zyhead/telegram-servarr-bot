@@ -6,5 +6,7 @@ export function loadConfig(dir = process.env.CONFIG_DIR || "config") {
   if (!c.telegram?.botToken) throw new Error("config: falta telegram.botToken");
   c.bot = { maxResults: 10, owner: 0, password: "", ...c.bot };
   if (!c.sonarr?.apiKey) delete c.sonarr;
+  if (!c.webhook?.token) delete c.webhook;
+  else c.webhook.port ??= 8787;
   return c;
 }

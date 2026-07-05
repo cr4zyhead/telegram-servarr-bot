@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { libraryLines, upcomingLines, chunk, runOnBoth } from "../src/library.js";
+import { libraryLines, upcomingLines, chunk, runOnBoth, queueLines } from "../src/library.js";
 
 const fake = (routes) => ({
   get: async (p) => routes[p] ?? [],
@@ -30,6 +30,14 @@ test("upcomingLines ordena por fecha y marca descargados", async () => {
   assert.match(lines[1], /Peli/);
 });
 
+test("upcomingLines formatea la fecha según locale", async () => {
+  const radarr = fake({ calendar: [{ title: "Peli", digitalRelease: "2026-01-15", hasFile: false }] });
+  const esLine = (await upcomingLines(radarr, null, 30, "es"))[0];
+  const enLine = (await upcomingLines(radarr, null, 30, "en"))[0];
+  assert.match(esLine, /ene/i);
+  assert.match(enLine, /jan/i);
+});
+
 test("chunk parte en bloques de 50", () => {
   const out = chunk(Array.from({ length: 120 }, (_, i) => String(i)));
   assert.deepEqual(out.map((c) => c.length), [50, 50, 20]);
@@ -55,4 +63,13 @@ test("runOnBoth reporta fallo parcial sin perder el éxito previo", async () => 
   const out = await runOnBoth(r, s, "RssSync", "RssSync");
   assert.equal(out[0], "🎬 RssSync");
   assert.match(out[1], /^📺 RssSync ⚠️ boom/);
+});
+
+test("queueLines combina con porcentaje y tolera sonarr null", async () => {
+  const radarr = fake({ queue: { records: [{ movie: { title: "Dune" }, size: 100, sizeleft: 55, status: "downloading", timeleft: "00:10:00" }] } });
+  const sonarr = fake({ queue: { records: [{ series: { title: "Dark" }, episode: { seasonNumber: 2, episodeNumber: 3 }, size: 200, sizeleft: 0, status: "importing" }] } });
+  const lines = await queueLines(radarr, sonarr);
+  assert.equal(lines[0], "🎬 Dune — 45% (00:10:00) · downloading");
+  assert.equal(lines[1], "📺 Dark 2x03 — 100% · importing");
+  assert.deepEqual(await queueLines(fake({ queue: { records: [] } }), null), []);
 });
