@@ -2,7 +2,7 @@
 
 A Telegram bot to manage **Radarr** (movies) and **Sonarr** (series) from chat: search with a **poster carousel**, add with quality profile and folder, browse your library and the upcoming calendar. Inline-button UI, **bilingual (English/Spanish)** — it auto-detects each user's Telegram language and can be overridden per user with `/language`.
 
-Modern rewrite (Node 22+, ESM, [grammY](https://grammy.dev)) inspired by [itsmegb/telegram-radarr-bot](https://github.com/itsmegb/telegram-radarr-bot) (MIT), which relied on long-retired APIs. This bot speaks `/api/v3`, the current API on both apps (note the API number doesn't match the app version) — compatible with Radarr v3 and later (tested on v6.x) and Sonarr v3/v4 (tested on v4.x).
+Modern rewrite (Node 22+, ESM, [grammY](https://grammy.dev)) inspired by [itsmegb/telegram-radarr-bot](https://github.com/itsmegb/telegram-radarr-bot) (MIT), which relied on long-retired APIs. This bot speaks `/api/v3`, the current API on both apps.
 
 ## Commands
 
